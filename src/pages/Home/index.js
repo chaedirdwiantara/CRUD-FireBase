@@ -1,5 +1,5 @@
 import React, {Component} from 'react';
-import {Text, StyleSheet, View, TouchableOpacity} from 'react-native';
+import {Text, StyleSheet, View, TouchableOpacity, Alert} from 'react-native';
 import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
 import {faPlus} from '@fortawesome/free-solid-svg-icons';
 import FIREBASE from '../../config/FIREBASE';
@@ -15,7 +15,7 @@ export default class Home extends Component {
     };
   }
 
-  componentDidMount() {
+  ambilData = () => {
     FIREBASE.database()
       .ref('Kontak') // harus sama dgn nama yg ada di fireBase
       .once('value', querySnapShot => {
@@ -27,7 +27,31 @@ export default class Home extends Component {
           kontaksKey: Object.keys(kontakItem),
         });
       });
+  };
+
+  componentDidMount() {
+    this.ambilData();
   }
+
+  removeData = id => {
+    Alert.alert('Info', 'Anda yakin ingin menghapus data kontak?', [
+      {
+        text: 'Cancel',
+        onPress: () => console.log('Cancel Pressed'),
+        style: 'cancel',
+      },
+      {
+        text: 'OK',
+        onPress: () => {
+          FIREBASE.database()
+            .ref('Kontak/' + id)
+            .remove();
+          this.ambilData();
+          Alert.alert('Hapus', 'Sukses Hapus Data');
+        },
+      },
+    ]);
+  };
 
   render() {
     const {kontaks, kontaksKey} = this.state;
@@ -40,7 +64,13 @@ export default class Home extends Component {
         <View style={styles.listKontak}>
           {kontaksKey.length > 0 ? (
             kontaksKey.map(key => (
-              <CardKontak key={key} kontakItem={kontaks[key]} id={key} />
+              <CardKontak
+                key={key}
+                kontakItem={kontaks[key]}
+                id={key}
+                {...this.props}
+                removeData={this.removeData}
+              />
             ))
           ) : (
             <Text>Daftar Kosong</Text>
